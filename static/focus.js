@@ -5,20 +5,36 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    const orgOgrns = await sendRequest(API.organizationList);
+
+    if (!orgOgrns) {
+        return;
+    }
+
+    const ogrns = orgOgrns.join(",");
+
+    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    if (!requisites) {
+        return;
+    }
+
+    const orgsMap = reqsToMap(requisites);
+
+    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    if (!analytics) {
+        return;
+    }
+
+    addInOrgsMap(orgsMap, analytics, "analytics");
+
+    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    if (!buh) {
+        return;
+    }
+
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
